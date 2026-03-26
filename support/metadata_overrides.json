@@ -1,0 +1,11 @@
+{
+  "credential_request_encryption_jwk": {
+    "alg": "ECDH-ES",
+    "crv": "P-256",
+    "kty": "EC",
+    "use": "enc",
+    "x": "8UUxHuhWjtPnsEAD-jEUxhUCI4L84emrXQpvOt7ROMU",
+    "y": "rjBsYCXXePaIkdsga7V9xsmxv12GkRT_BFnqpG3huI8",
+    "kid": "W42dFo4tT8cAfHKJpONNrD18JHXv4tY4UUdN7xnuK1k"
+  }
+}

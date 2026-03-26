@@ -64,6 +64,41 @@ def replace_domain(
         return obj
 
 
+def _load_metadata_overrides(dir_path: str) -> Dict[str, Any]:
+    override_paths = []
+    configured_path = os.getenv("FRONTEND_METADATA_OVERRIDES_FILE") or os.getenv(
+        "METADATA_OVERRIDES_FILE"
+    )
+    if configured_path:
+        override_paths.append(configured_path)
+
+    override_paths.append(
+        os.path.join(os.path.dirname(dir_path), "support", "metadata_overrides.json")
+    )
+
+    for override_path in override_paths:
+        if os.path.isfile(override_path):
+            with open(override_path, encoding="utf-8") as override_file:
+                return json.load(override_file)
+
+    return {}
+
+
+def _apply_metadata_overrides(metadata: Dict[str, Any], overrides: Dict[str, Any]) -> None:
+    credential_request_encryption = metadata.get("credential_request_encryption")
+    if not isinstance(credential_request_encryption, dict):
+        return
+
+    jwks = overrides.get("credential_request_encryption_jwks")
+    if isinstance(jwks, dict):
+        credential_request_encryption["jwks"] = jwks
+        return
+
+    jwk = overrides.get("credential_request_encryption_jwk")
+    if isinstance(jwk, dict):
+        credential_request_encryption["jwks"] = {"keys": [jwk]}
+
+
 def setup_metadata():
     global oidc_metadata
     global oidc_metadata_clean
@@ -84,6 +119,10 @@ def setup_metadata():
         with open(dir_path + "/metadata_config/metadata_config.json") as metadata:
             oidc_metadata = json.load(metadata)
             oidc_metadata_clean = copy.deepcopy(oidc_metadata)
+
+        metadata_overrides = _load_metadata_overrides(dir_path)
+        _apply_metadata_overrides(oidc_metadata, metadata_overrides)
+        _apply_metadata_overrides(oidc_metadata_clean, metadata_overrides)
 
         metadata_endpoint = f"{cfgserv.issuer_url}/.well-known/openid-credential-issuer"
 
